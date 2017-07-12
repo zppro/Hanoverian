@@ -1,6 +1,6 @@
 {
   "name": "hanoverian",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "app framework with js tech integrated and self-envolution",
   "main": "index.js",
   "scripts": {
