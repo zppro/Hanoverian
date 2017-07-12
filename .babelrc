@@ -1,6 +1,13 @@
 {
   "presets": [
-    ["env", { "modules": false }]
+    [
+      "env",
+      {
+        "targets": {
+          "node": "current"
+        }
+      }
+    ]
   ],
   "plugins": [
     "syntax-dynamic-import"
