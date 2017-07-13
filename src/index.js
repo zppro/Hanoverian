@@ -4,6 +4,116 @@
  */
 import path from 'path';
 import fs from 'fs-extra';
-import brick, { logger } from 'cube-brick';
-import yargs from 'yargs'
-logger.d('yargs', yargs.argv, '------------------');
+import log4js from 'log4js';
+import yargs from 'yargs';
+import Koa from 'koa';
+import Router from 'koa-router';
+import KoaBody from 'koa-body';
+import XmlBodyParser from 'koa-xml-body';
+
+import utils, { logger } from 'cube-brick';
+
+const app = new Koa();
+const router = new Router();
+const koaBody = KoaBody();
+const xmlBodyParser = XmlBodyParser();
+
+// --client.bulidtarget=vendor-1.x
+// --db.mongodb.user=4gtour
+// --db.mongodb.password=4gtour2016
+// --db.mongodb.server=localhost
+// --db.mongodb.port=27017
+// --db.mongodb.database=4gtour
+// --secure.authSecret=woosiyuan
+// --secure.authSecretRobot=woosiyuan-robot-pension-agency
+// --secure.authSecretWXApp=woosiyuan-wxapp-general
+// --port=3002
+
+app.conf = {
+    isProduction: utils.isProduction(),
+    dir: {
+        root: __dirname,
+        log: path.join(__dirname, '../logs'),
+        apis: path.join(__dirname, 'apis'), //apis
+        components: path.join(__dirname, 'components')
+    },
+    bodyParser: {
+        xml: [] //body需要xml解析
+    },
+    port: 9999,
+    ...yargs.argv
+};
+
+(async ()=>{
+
+    logger.d(`parse apis ...`);
+    let apiFiles = await utils.readDirectoryStructure(app.conf.dir.apis, { format: 'array', exts: '.js', excludeDirs: ['node_modules', '.git']});
+    // console.log('apis', apis);
+    if(apiFiles.length > 0){
+        logger.d(`process apis ...`);
+
+        logger.d(`configure logs for apis...`);
+        let logNames = [];
+        let configAppenders = {};
+        apiFiles.reduce((result, o) => {
+            result[o.name] =  {
+                type: 'file',
+                filename: path.join(app.conf.dir.log, o.relative_path.split('/').join('_') + '.log'),
+                maxLogSize: 2 * 1024 * 1024, //2M
+                backups: 5
+            };
+            logNames.push(o.name);
+            return result;
+        }, configAppenders);
+        console.log(`configAppenders:`, configAppenders);
+        log4js.configure({
+            appenders: configAppenders,
+            categories: { default: { appenders: logNames, level: 'debug' }}
+        });
+        console.log(logNames);
+
+
+        let apis = await Promise.all(apiFiles.map(async o => await import(`${app.conf.dir.apis}/${o.relative_path2}`).then(svc => {
+                return {svc: svc.default, props: o}
+            }
+        )));
+        console.log(`apis:`, apis);
+
+        logger.d(`register routers for apis...`)
+        apis.forEach(async api => {
+            // let svc = await import(`${app.conf.dir.apis}/${o.relative_path2}`).then(svc => svc.default);
+            // let svc = require(`${app.conf.dir.apis}/${o.relative_path2}`).default, getLogConfig = svc.getLogConfig;
+            let svc = api.svc;
+            let svc_module_name = api.props.name;
+            if (svc_module_name.includes('_')) {
+                svc_module_name = svc_module_name.split('_').join('/');
+            }
+            svc.init(`${api.props.relative_path}`.substr(0, api.props.relative_path.indexOf('.')), {logName: `${api.props.name}`});
+            svc.actions.forEach(action => {
+                let bodyParser;
+                if (app.conf.bodyParser.xml.findIndex(a => action.url.startsWith(a)) == -1) {
+                    bodyParser = koaBody;
+                } else {
+                    bodyParser = xmlBodyParser({
+                        encoding: 'utf8',
+                        onerror: (err, ctx) => {
+                            logger.e(err);
+                        }
+                    });
+                    logger.d('xmlBodyParser use to ' + action.url);
+                }
+                Router.prototype[action.verb].apply(router, [`${svc.name}_${action.method}`, action.url, bodyParser, action.handler(app)]);
+            });
+        });
+    }
+
+
+    app.use(router.routes()).use(router.allowedMethods());
+
+    const svr = app.listen(app.conf.port);
+
+    svr.listen(app.conf.port);
+
+    logger.d(`listen ${app.conf.port}...`);
+
+})();
