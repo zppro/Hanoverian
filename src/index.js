@@ -11,7 +11,7 @@ import Router from 'koa-router';
 import KoaBody from 'koa-body';
 import XmlBodyParser from 'koa-xml-body';
 
-import utils, { logger, mongoManager, mongoFactory } from 'cube-brick';
+import utils, { logger, mongoManager } from 'cube-brick';
 
 
 const app = new Koa();
@@ -55,8 +55,6 @@ app.conf = {
 
     console.log(`load models...`);
     await mongoManager.loadModels(app.conf.dir.db_schemas);
-    let users = await mongoFactory().query('pub_user', {});
-    console.log('users:', users.length);
 
     logger.d(`parse apis ...`);
     let apiFiles = await utils.readDirectoryStructure(app.conf.dir.apis, { format: 'array', exts: '.js', excludeDirs: ['node_modules', '.git']});
@@ -94,8 +92,6 @@ app.conf = {
 
         logger.d(`register routers for apis...`)
         apis.forEach(async api => {
-            // let svc = await import(`${app.conf.dir.apis}/${o.relative_path2}`).then(svc => svc.default);
-            // let svc = require(`${app.conf.dir.apis}/${o.relative_path2}`).default, getLogConfig = svc.getLogConfig;
             let svc = api.svc;
             let svc_module_name = api.props.name;
             if (svc_module_name.includes('_')) {
