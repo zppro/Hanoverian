@@ -2,8 +2,8 @@
  * Created by zppro on 17-7-13.
  */
 
-import log4js from 'log4js'; 
-const qrService = {
+import log4js from 'log4js';
+const shareModel = {
     init: function (routerUrl, initOptions) {
 
         this.routerUrl = routerUrl;
@@ -13,7 +13,7 @@ const qrService = {
 
         let self = this;
 
-        this.logger4js =  log4js.getLogger(initOptions.log_name || ('svc_' + __filename.substr(__filename.lastIndexOf('/') + 1)));
+        this.logger4js =  log4js.getLogger(initOptions.log_name);
         this.logger4js.info(__filename + " loaded!");
 
         this.actions = [
@@ -64,4 +64,4 @@ const qrService = {
     }
 }
 
-export default qrService;
+export default shareModel;

@@ -3,6 +3,7 @@
  */
 
 import log4js from 'log4js';
+
 const qrService = {
     init: function (routerUrl, initOptions) {
 
@@ -10,7 +11,6 @@ const qrService = {
         initOptions = initOptions || {};
 
         // console.log(`this.routerUrl:${this.routerUrl}`)
-
         let self = this;
 
         this.logger4js =  log4js.getLogger(initOptions.log_name || ('svc_' + __filename.substr(__filename.lastIndexOf('/') + 1)));

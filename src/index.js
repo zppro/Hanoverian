@@ -11,7 +11,8 @@ import Router from 'koa-router';
 import KoaBody from 'koa-body';
 import XmlBodyParser from 'koa-xml-body';
 
-import utils, { logger } from 'cube-brick';
+import utils, { logger, mongoManager, mongoFactory } from 'cube-brick';
+
 
 const app = new Koa();
 const router = new Router();
@@ -35,6 +36,7 @@ app.conf = {
         root: __dirname,
         log: path.join(__dirname, '../logs'),
         apis: path.join(__dirname, 'apis'), //apis
+        db_schemas: path.join(__dirname, 'db-schemas'),
         components: path.join(__dirname, 'components')
     },
     bodyParser: {
@@ -46,15 +48,25 @@ app.conf = {
 
 (async ()=>{
 
+    //配置数据库
+    console.log(`configure mongodb ...`);
+    mongoManager.init(app);
+    mongoManager.connectDB();
+
+    console.log(`load models...`);
+    await mongoManager.loadModels(app.conf.dir.db_schemas);
+    let users = await mongoFactory().query('pub_user', {});
+    console.log('users:', users.length);
+
     logger.d(`parse apis ...`);
     let apiFiles = await utils.readDirectoryStructure(app.conf.dir.apis, { format: 'array', exts: '.js', excludeDirs: ['node_modules', '.git']});
-    // console.log('apis', apis);
+    console.log('apis', apiFiles);
     if(apiFiles.length > 0){
         logger.d(`process apis ...`);
 
         logger.d(`configure logs for apis...`);
-        let logNames = [];
-        let configAppenders = {};
+        let logCatagories = {};
+        let configAppenders = {out: { type: 'stdout' }};
         apiFiles.reduce((result, o) => {
             result[o.name] =  {
                 type: 'file',
@@ -62,22 +74,23 @@ app.conf = {
                 maxLogSize: 2 * 1024 * 1024, //2M
                 backups: 5
             };
-            logNames.push(o.name);
+            logCatagories[o.name] = { appenders: ['out', o.name], level: 'debug' };
             return result;
         }, configAppenders);
-        console.log(`configAppenders:`, configAppenders);
+
         log4js.configure({
             appenders: configAppenders,
-            categories: { default: { appenders: logNames, level: 'debug' }}
+            categories: {
+                ...logCatagories,
+                default: {appenders: ['out'], level: 'debug'}
+            }
         });
-        console.log(logNames);
-
 
         let apis = await Promise.all(apiFiles.map(async o => await import(`${app.conf.dir.apis}/${o.relative_path2}`).then(svc => {
                 return {svc: svc.default, props: o}
             }
         )));
-        console.log(`apis:`, apis);
+        // console.log(`apis:`, apis);
 
         logger.d(`register routers for apis...`)
         apis.forEach(async api => {
@@ -88,7 +101,7 @@ app.conf = {
             if (svc_module_name.includes('_')) {
                 svc_module_name = svc_module_name.split('_').join('/');
             }
-            svc.init(`${api.props.relative_path}`.substr(0, api.props.relative_path.indexOf('.')), {logName: `${api.props.name}`});
+            svc.init(`${api.props.relative_path}`.substr(0, api.props.relative_path.indexOf('.')), {log_name: `${api.props.name}`});
             svc.actions.forEach(action => {
                 let bodyParser;
                 if (app.conf.bodyParser.xml.findIndex(a => action.url.startsWith(a)) == -1) {
