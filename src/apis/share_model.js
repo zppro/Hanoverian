@@ -3,13 +3,13 @@
  */
 
 import log4js from 'log4js';
+import { responser, mongoFactory } from 'cube-brick';
+
 const shareModel = {
     init: function (routerUrl, initOptions) {
 
-        this.routerUrl = routerUrl;
+        this.routerUrl = routerUrl.split('_').join('/');
         initOptions = initOptions || {};
-
-        // console.log(`this.routerUrl:${this.routerUrl}`)
 
         let self = this;
 
@@ -18,42 +18,197 @@ const shareModel = {
 
         this.actions = [
             {
-                method: 'qr',
-                verb: 'get',
-                url: this.routerUrl,
-                handler: function (app, options) {
-                    return async(ctx, next) => {
+                method: 'create',
+                verb: 'post',
+                url: self.routerUrl + "/:model",
+                handler: (app) => {
+                    return async (ctx, next) => {
                         try {
-                            let query = ctx.query;
-                            let qrStream = await qrBuilder.getQRStream(query.text, query.ei);
-                            ctx.response.type = 'image/png';
-                            ctx.body = qrStream;
-
+                            ctx.body = responser.ret(await mongoFactory().create(ctx.params.model, ctx.request.body));
                         } catch (e) {
-                            app.combinedLogger.log(self.logger4js, e);
-                            ctx.body = app.wrapper.res.error(e);
-
+                            self.logger4js.error(e.message);
+                            ctx.body = responser.error(e);
                         }
                         await next;
                     };
                 }
             },
             {
-                method: 'qr',
-                verb: 'post',
-                url: this.routerUrl,
-                handler: function (app, options) {
-                    return async(ctx, next) => {
+                method: 'read',
+                verb: 'get',
+                url: self.routerUrl + "/:model/:_id",
+                handler: (app) => {
+                    return async (ctx, next) => {
                         try {
-                            let body = ctx.request.body;
-                            console.log('body:', body);
-                            let qrStream = await qrBuilder.getQRStream(body.text, body.ei);
-                            ctx.response.type = 'image/png';
-                            ctx.body = qrStream;
+                            let _id = ctx.params._id;
+                            if (_id === '$one') {
+                                let theOne = await mongoFactory().one(ctx.params.model, {
+                                    where: ctx.query,
+                                    select: '_id '
+                                });
+                                if(theOne){
+                                    ctx.body = responser.ret(theOne);
+                                }
+                                else {
+                                    ctx.body = responser.ret({_id: null});
+                                }
+                            }
+                            else {
+                                let instance = await mongoFactory().read(ctx.params.model, _id);
+                                ctx.body = app.wrapper.res.ret(instance);
+                            }
                         } catch (e) {
-                            app.combinedLogger.log(self.logger4js, e);
-                            ctx.body = app.wrapper.res.error(e);
-
+                            self.logger4js.error(e.message);
+                            ctx.body = responser.error(e);
+                        }
+                        await next;
+                    };
+                }
+            },
+            {
+                method: 'update',
+                verb: 'put',
+                url: self.routerUrl + "/:model/:_id",
+                handler: (app) => {
+                    return async (ctx, next) => {
+                        try {
+                            let ret = await mongoFactory().update(ctx.params.model, ctx.params._id, ctx.request.body);
+                            ctx.body = responser.ret(ret);
+                        } catch (e) {
+                            self.logger4js.error(e.message);
+                            ctx.body = responser.error(e);
+                        }
+                        await next;
+                    };
+                }
+            },
+            {
+                method: 'delete',
+                verb: 'delete',
+                url: self.routerUrl + "/:model/:_id",
+                handler: (app) => {
+                    return async (ctx, next) => {
+                        try {
+                            ctx.body = responser.ret(await mongoFactory().delete(ctx.params.model, ctx.params._id));
+                        } catch (e) {
+                            self.logger4js.error(e.message);
+                            ctx.body = responser.error(e);
+                        }
+                        await next;
+                    };
+                }
+            },
+            {
+                method: 'list',
+                verb: 'get',
+                url: self.routerUrl + "/:model",
+                handler: (app) => {
+                    return async (ctx, next) => {
+                        try {
+                            ctx.body = responser.rows(await mongoFactory().query(ctx.params.model));
+                        } catch (e) {
+                            self.logger4js.error(e.message);
+                            ctx.body = responser.error(e);
+                        }
+                        await next;
+                    };
+                }
+            },
+            {
+                method: 'query',
+                verb: 'post',
+                url: self.routerUrl + "/:model/$query",
+                handler: (app) => {
+                    return async (ctx, next) => {
+                        try {
+                            let rows = mongoFactory().query(ctx.params.model, ctx.request.body);
+                            let populates = ctx.request.body.populates;
+                            if (populates) {
+                                if (Array.isArray(populates)) {
+                                    populates.forEach(p => {rows = rows.populate(p);});
+                                } else {
+                                    rows = rows.populate(populates);
+                                }
+                            }
+                            ctx.body = responser.rows(await rows);
+                        } catch (e) {
+                            self.logger4js.error(e.message);
+                            ctx.body = responser.error(e);
+                        }
+                        await next;
+                    };
+                }
+            },
+            {
+                method: 'single',
+                verb: 'post',
+                url: self.routerUrl + "/:model/$single",
+                handler: (app) => {
+                    return async (ctx, next) => {
+                        try {
+                            let theOne =  mongoFactory().one(ctx.params.model, ctx.request.body);
+                            let populates = ctx.request.body.populates;
+                            if (populates) {
+                                if (Array.isArray(populates)) {
+                                    populates.forEach(p => {theOne = theOne.populate(p);});
+                                } else {
+                                    theOne = theOne.populate(populates);
+                                }
+                            }
+                            ctx.body = responser.rows(await theOne);
+                        } catch (e) {
+                            self.logger4js.error(e.message);
+                            ctx.body = responser.error(e);
+                        }
+                        await next;
+                    };
+                }
+            },
+            {
+                method: 'totals',
+                verb: 'post',
+                url: self.routerUrl + "/:model/$totals",
+                handler: (app) => {
+                    return async (ctx, next) => {
+                        try {
+                            ctx.body = responser.ret((await mongoFactory().totals(ctx.params.model, ctx.request.body)).length);
+                        } catch (e) {
+                            self.logger4js.error(e.message);
+                            ctx.body = responser.error(e);
+                        }
+                        await next;
+                    };
+                }
+            },
+            {
+                method: 'bulkInsert',
+                verb: 'post',
+                url: self.routerUrl + "/:model/$bulkInsert",
+                handler: (app) => {
+                    return async (ctx, next) => {
+                        try {
+                            await mongoFactory().bulkInsert(ctx.params.model, ctx.request.body);
+                            ctx.body = responser.default();
+                        } catch (e) {
+                            self.logger4js.error(e.message);
+                            ctx.body = responser.error(e);
+                        }
+                        await next;
+                    };
+                }
+            },
+            {
+                method: 'bulkUpdate',
+                verb: 'post',
+                url: self.routerUrl + "/:model/$bulkUpdate",
+                handler: (app) => {
+                    return async (ctx, next) => {
+                        try {
+                            let ret = await mongoFactory().bulkUpdate(ctx.params.model, ctx.request.body);
+                            ctx.body = responser.default();
+                        } catch (e) {
+                            self.logger4js.error(e.message);
+                            ctx.body = responser.error(e);
                         }
                         await next;
                     };

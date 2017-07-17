@@ -3,9 +3,9 @@
  * pub 用户实体
  */
 var mongoose = require('mongoose');
-import DICT from '../../pre-defined/dictionary.json';
+import DICT_PUB from '../../pre-defined/dictionary-pub.json';
 
-const D1000 = DICT["D1000"];
+const PUB06 = DICT_PUB["PUB06"];
 
 const userSchema = new mongoose.Schema({
     check_in_time: {type: Date, default: Date.now},
@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema({
     code: {type: String, required: true, maxlength: 30, index: {unique: true}},
     name: {type: String, required: true, maxlength: 30},
     phone: {type: String, maxlength: 20, unique: true, index: true},
-    type: {type: String, enum: Object.keys(D1000).slice(1)},
+    type: {type: String, enum: Object.keys(PUB06).slice(1)},
     roles: [String],
     system_flag: {type: Boolean, default: false},
     stop_flag: {type: Boolean, default: false},//开通标志 租户是否可用
