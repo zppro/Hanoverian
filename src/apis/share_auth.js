@@ -53,22 +53,25 @@ const shareModel = {
                             }
 
                             console.log('body:', ctx.request.body.code, password);
-                            let user = await mongoFactory().one('pub_user', {
+                            let user = (await mongoFactory().one('pub_user', {
                                 where: {
                                     code: ctx.request.body.code,
                                     password_hash: password,
                                     status: 1
                                 }, select: "code name stop_flag type roles tenantId"
-                            });
+                            }));
 
                             if (user) {
+                                for(let k in user) {
+                                    console.log('for:', k, user[k]);
+                                }
                                 if (user.stop_flag) {
                                     ctx.body = responser.error({message: '该用户已停用!'});
                                     await next;
                                     return;
                                 }
-                                var tenant = null;
-                                var open_funcs;
+                                let tenant, open_funcs;
+                                console.log('user:', typeof user, user, user.code, DIC.PUB06.TENANT);
                                 if (user.type === DIC.PUB06.TENANT) {
                                     //普通租户
                                     tenant = await mongoFactory().one('pub_tenant', {
@@ -104,7 +107,7 @@ const shareModel = {
 
                                 //日期字符 保证token当日有效
                                 // sign with default (HMAC SHA256)
-                                var token = jwt.sign(user, app.conf.secure.authSecret + ':' + moment().format('YYYY-MM-DD'));
+                                let token = jwt.sign(user, app.conf.secure.authSecret + ':' + moment().format('YYYY-MM-DD'));
 
                                 console.log(token);
 

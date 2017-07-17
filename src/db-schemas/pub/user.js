@@ -2,7 +2,8 @@
  * Created by zppro on 17-7-14.
  * pub 用户实体
  */
-var mongoose = require('mongoose');
+
+import mongoose from 'mongoose';
 import DICT_PUB from '../../pre-defined/dictionary-pub.json';
 
 const PUB06 = DICT_PUB["PUB06"];
