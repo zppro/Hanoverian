@@ -55,12 +55,9 @@ app.conf = {
 
     console.log(`load models...`);
     await mongoManager.loadModels(app.conf.dir.db_schemas);
-    let users = await mongoFactory().query('pub_user', {});
-    console.log('users:', users.length);
 
     logger.d(`parse apis ...`);
     let apiFiles = await utils.readDirectoryStructure(app.conf.dir.apis, { format: 'array', exts: '.js', excludeDirs: ['node_modules', '.git']});
-    console.log('apis', apiFiles);
     if(apiFiles.length > 0){
         logger.d(`process apis ...`);
 
@@ -93,19 +90,19 @@ app.conf = {
         // console.log(`apis:`, apis);
 
         logger.d(`register routers for apis...`)
-        apis.forEach(async api => {
-            // let svc = await import(`${app.conf.dir.apis}/${o.relative_path2}`).then(svc => svc.default);
-            // let svc = require(`${app.conf.dir.apis}/${o.relative_path2}`).default, getLogConfig = svc.getLogConfig;
+        apis.forEach(api => {
             let svc = api.svc;
             let svc_module_name = api.props.name;
             if (svc_module_name.includes('_')) {
                 svc_module_name = svc_module_name.split('_').join('/');
             }
-            svc.init(`${api.props.relative_path}`.substr(0, api.props.relative_path.indexOf('.')), {log_name: `${api.props.name}`});
+            let routerUrl = `/${api.props.relative_path}`.substr(0, api.props.relative_path.indexOf('.') + 1);
+            svc.init(routerUrl, {log_name: `${api.props.name}`});
             svc.actions.forEach(action => {
                 let bodyParser;
                 if (app.conf.bodyParser.xml.findIndex(a => action.url.startsWith(a)) == -1) {
                     bodyParser = koaBody;
+                    // logger.d('jsonBodyParser use to ' + action.url);
                 } else {
                     bodyParser = xmlBodyParser({
                         encoding: 'utf8',
@@ -115,17 +112,17 @@ app.conf = {
                     });
                     logger.d('xmlBodyParser use to ' + action.url);
                 }
-                Router.prototype[action.verb].apply(router, [`${svc.name}_${action.method}`, action.url, bodyParser, action.handler(app)]);
+                router[action.verb](`${routerUrl}_${action.method}`, action.url, bodyParser, action.handler(app));
             });
         });
     }
 
-
     app.use(router.routes()).use(router.allowedMethods());
 
     const svr = app.listen(app.conf.port);
+    // app.listen(app.conf.port);
 
-    svr.listen(app.conf.port);
+    // svr.listen(app.conf.port);
 
     logger.d(`listen ${app.conf.port}...`);
 
