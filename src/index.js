@@ -10,6 +10,7 @@ import Koa from 'koa';
 import Router from 'koa-router';
 import KoaBody from 'koa-body';
 import XmlBodyParser from 'koa-xml-body';
+import mongoose from 'mongoose';
 
 import utils, { logger, mongoManager, mongoFactory } from 'cube-brick';
 

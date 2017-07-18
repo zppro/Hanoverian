@@ -4,6 +4,7 @@
  */
 
 import mongoose from 'mongoose';
+import md5 from 'crypto-js/md5';
 import DICT_PUB from '../../pre-defined/dictionary-pub.json';
 
 const PUB06 = DICT_PUB["PUB06"];
@@ -33,7 +34,7 @@ userSchema.pre('save', function (next) {
     if (!this.password_hash) {
         //设置默认密码
         //order.type+[年2月2日2]+6位随机数
-        this.password_hash = ctx.crypto.createHash('md5').update('123456').digest('hex');
+        this.password_hash = md5('123456').toString();
     }
     next();
 });

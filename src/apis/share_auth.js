@@ -47,31 +47,29 @@ const shareModel = {
                 handler: (app) => {
                     return async (ctx, next) => {
                         try {
+                            console.log('ctx.request.body=>', ctx.request.body)
                             let password = ctx.request.body.password;
                             if (password.length != 32) {
                                 password = md5(password).toString();
                             }
 
                             console.log('body:', ctx.request.body.code, password);
-                            let user = (await mongoFactory().one('pub_user', {
+                            let user = await mongoFactory().one('pub_user', {
                                 where: {
                                     code: ctx.request.body.code,
                                     password_hash: password,
                                     status: 1
                                 }, select: "code name stop_flag type roles tenantId"
-                            }));
+                            });
 
                             if (user) {
-                                for(let k in user) {
-                                    console.log('for:', k, user[k]);
-                                }
                                 if (user.stop_flag) {
                                     ctx.body = responser.error({message: '该用户已停用!'});
                                     await next;
                                     return;
                                 }
                                 let tenant, open_funcs;
-                                console.log('user:', typeof user, user, user.code, DIC.PUB06.TENANT);
+                                console.log('user:', user.type, DIC.PUB06.TENANT);
                                 if (user.type === DIC.PUB06.TENANT) {
                                     //普通租户
                                     tenant = await mongoFactory().one('pub_tenant', {
