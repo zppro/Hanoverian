@@ -1,6 +1,6 @@
 {
   "name": "hanoverian",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "app framework with js tech integrated and self-envolution",
   "main": "index.js",
   "scripts": {
@@ -11,7 +11,8 @@
     "build:backend": "babel src --out-dir dist -i src/apps/** && babel src/pre-defined --copy-files --out-dir dist/pre-defined",
     "build:app": "npm run build:app:client && npm run build:app:server",
     "build:app:client": "cross-env NODE_ENV=production webpack --config build/webpack.client.config.js --progress --hide-modules",
-    "build:app:server": "cross-env NODE_ENV=production webpack --config build/webpack.server.config.js --progress --hide-modules"
+    "build:app:server": "cross-env NODE_ENV=production webpack --config build/webpack.server.config.js --progress --hide-modules",
+    "lint": "eslint --ext .js,.vue src"
   },
   "repository": {
     "type": "git",
