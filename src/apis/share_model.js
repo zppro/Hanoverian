@@ -47,8 +47,7 @@ const shareModel = {
                 } else {
                   ctx.body = responser.ret({_id: null})
                 }
-              }
-              else {
+              } else {
                 let instance = await mongoFactory().read(ctx.params.model, _id)
                 ctx.body = app.wrapper.res.ret(instance)
               }
@@ -199,7 +198,7 @@ const shareModel = {
         handler: app => {
           return async (ctx, next) => {
             try {
-              let ret = await mongoFactory().bulkUpdate(ctx.params.model, ctx.request.body)
+              await mongoFactory().bulkUpdate(ctx.params.model, ctx.request.body)
               ctx.body = responser.default()
             } catch (e) {
               self.logger4js.error(e.message)
