@@ -21,7 +21,6 @@ const service = {
         handler: app => {
           return async (ctx, next) => {
             try {
-              console.log('################### /tpa/stats')
               ctx.body = responser.ret({tpaNumbers: 88})
             } catch (e) {
               self.logger4js.error(e.message)
