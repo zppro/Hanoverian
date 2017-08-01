@@ -13,7 +13,9 @@ import XmlBodyParser from 'koa-xml-body'
 // import mongoose from 'mongoose'
 
 // import utils, { logger, mongoManager, mongoFactory } from 'cube-brick'
-import utils, { logger, mongoManager } from 'cube-brick'
+import utils, { koaCORS, logger, mongoManager } from 'cube-brick'
+
+import corsWhitelist from './pre-defined/cors-whitelist.json'
 
 const app = new Koa()
 const router = new Router()
@@ -43,6 +45,9 @@ app.conf = {
   bodyParser: {
     xml: [] // body需要xml解析
   },
+  cors:{
+    toPaths: ['/apis']
+  },
   port: 9999,
   ...yargs.argv
 }
@@ -55,6 +60,13 @@ app.conf = {
 
   logger.d(`load models...`)
   await mongoManager.loadModels(app.conf.dir.db_schemas)
+
+  //中间件
+  logger.d(`configure middlewares...`)
+  const cors = koaCORS(corsWhitelist, {ignorePaths: app.conf.cors.ignorePaths, logger})
+  app.conf.cors.toPaths.forEach(o => {
+    router.use(o, cors)
+  })
 
   logger.d(`parse apis ...`)
   let apiFiles = await utils.readDirectoryStructure(app.conf.dir.apis, {

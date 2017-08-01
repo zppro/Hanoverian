@@ -5,7 +5,7 @@
 import log4js from 'log4js'
 import { responser } from 'cube-brick'
 
-const shareDictonary = {
+const service = {
   init: function (routerUrl, initOptions = {}) {
     let self = this
     this.routerUrl = routerUrl.split('_').join('/')
@@ -49,4 +49,4 @@ const shareDictonary = {
   }
 }
 
-export default shareDictonary
+export default service

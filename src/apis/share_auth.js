@@ -10,7 +10,7 @@ import utils, { responser, mongoFactory } from 'cube-brick'
 
 import DIC from '../pre-defined/dictionary-constants.json'
 
-const shareModel = {
+const service = {
   init: function (routerUrl, initOptions = {}) {
     let self = this
     this.routerUrl = routerUrl.split('_').join('/')
@@ -105,4 +105,4 @@ const shareModel = {
   }
 }
 
-export default shareModel
+export default service

@@ -5,7 +5,7 @@
 import log4js from 'log4js'
 import { responser, mongoFactory } from 'cube-brick'
 
-const shareModel = {
+const service = {
   init: function (routerUrl, initOptions) {
     let self = this
     this.routerUrl = routerUrl.split('_').join('/')
@@ -213,4 +213,4 @@ const shareModel = {
   }
 }
 
-export default shareModel
+export default service
