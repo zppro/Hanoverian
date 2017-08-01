@@ -2,11 +2,14 @@
   {
     "_id": "010000",
     "name": "浙江",
+    "first_letter": "Z",
     "icon": "fa fa-folder",
     "children": [
       {
         "_id": "010100",
         "name": "杭州",
+        "first_letter": "H",
+        "hot": true,
         "children": [
           {
             "_id": "010101",
@@ -61,6 +64,57 @@
             "name": "临安市"
           }
         ]
+      },
+      {
+        "_id": "010200",
+        "first_letter": "N",
+        "name": "宁波",
+        "hot": true
+      },
+      {
+        "_id": "010300",
+        "first_letter": "W",
+        "name": "温州"
+      },
+      {
+        "_id": "010400",
+        "first_letter": "S",
+        "name": "绍兴"
+      },
+      {
+        "_id": "010500",
+        "first_letter": "H",
+        "name": "湖州"
+      },
+      {
+        "_id": "010600",
+        "first_letter": "J",
+        "name": "嘉兴"
+      },
+      {
+        "_id": "010700",
+        "first_letter": "J",
+        "name": "金华"
+      },
+      {
+        "_id": "010800",
+        "first_letter": "Q",
+        "name": "衢州"
+      },
+      {
+        "_id": "010900",
+        "first_letter": "T",
+        "name": "台州"
+      },
+      {
+        "_id": "011000",
+        "first_letter": "L",
+        "name": "丽水"
+      },
+      {
+        "_id": "011100",
+        "first_letter": "Z",
+        "name": "舟山"
       }
     ]
   }
