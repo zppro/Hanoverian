@@ -29,6 +29,27 @@ const service = {
             await next
           }
         }
+      },
+      {
+        method: 'tpa$slidersInIndex',
+        verb: 'get',
+        url: `${self.routerUrl}/tpa/slidersInIndex`,
+        handler: app => {
+          return async (ctx, next) => {
+            try {
+              ctx.body = responser.rows([
+                {id: 'slider1', img: 'https://img2.okertrip.com/99alive-alpha/1.png'},
+                {id: 'slider2', img: 'https://img2.okertrip.com/99alive-alpha/2.png'},
+                {id: 'slider3', img: 'https://img2.okertrip.com/99alive-alpha/3.jpg'},
+                {id: 'slider4', img: 'https://img2.okertrip.com/99alive-alpha/1.png'}
+              ])
+            } catch (e) {
+              self.logger4js.error(e.message)
+              ctx.body = responser.error(e)
+            }
+            await next
+          }
+        }
       }
     ]
     return this
