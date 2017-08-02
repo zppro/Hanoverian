@@ -3,7 +3,7 @@
  */
 
 import log4js from 'log4js'
-import { responser } from 'cube-brick'
+import utils, { responser } from 'cube-brick'
 
 const service = {
   init: function (routerUrl, initOptions = {}) {
@@ -21,20 +21,24 @@ const service = {
           return async (ctx, next) => {
             try {
               let sys = ctx.params.dictionaryId.substr(0, 3).toLowerCase()
-              let DICT = await import(`../pre-defined/dictionary-${sys}.json`)
-              let dictionary = DICT[ctx.params.dictionaryId]
+              const DICT = await import(`../pre-defined/dictionary-${sys}.json`)
+              let dictionaryId = ctx.params.dictionaryId
+              let format = ctx.params.format.toLowerCase()
+              const dictionary = DICT[dictionaryId]
               if (dictionary) {
-                if (ctx.params.format.toLowerCase() === 'array') {
+                if (format === 'array') {
                   let rows = []
                   for (let k in dictionary) {
                     k !== 'name' && rows.push({...dictionary[k], value: k})
                   }
                   ctx.body = responser.rows(rows)
+                } else if (format === 'pair') {
+                  ctx.body = responser.ret({key: dictionaryId, name: dictionary.name, value: utils.omit(dictionary, 'name')})
                 } else {
                   ctx.body = responser.ret(dictionary)
                 }
               } else {
-                ctx.body = ctx.params.format === 'array' ? [] : {}
+                ctx.body = format === 'array' ? [] : {}
               }
             } catch (e) {
               self.logger4js.error(e.message)
