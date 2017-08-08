@@ -1,6 +1,6 @@
 {
   "name": "hanoverian",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "app framework with js tech integrated and self-envolution",
   "main": "index.js",
   "scripts": {
@@ -36,7 +36,7 @@
   "dependencies": {
     "cross-env": "^5.0.1",
     "crypto-js": "^3.1.9-1",
-    "cube-brick": "^0.1.21",
+    "cube-brick": "^0.1.22",
     "es6-promise": "^4.1.1",
     "fs-extra": "^3.0.1",
     "jsonwebtoken": "^7.4.1",
