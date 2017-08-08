@@ -150,6 +150,32 @@ const service = {
             await next
           }
         }
+      },
+      {
+        method: 'tpa$agenciesInQuery',
+        verb: 'get',
+        url: `${self.routerUrl}/tpa/agenciesInQuery`,
+        handler: app => {
+          return async (ctx, next) => {
+            try {
+              ctx.body = responser.rows([
+                {id: '31', name: '北京光大汇晨朝来老年公寓31', img:'https://img2.okertrip.com/99alive-alpha/3.jpg', charge_interval: '1500-6000', bed_nums: 450},
+                {id: '32', name: '北京光大汇晨朝来老年公寓32', img:'https://img2.okertrip.com/99alive-alpha/3.jpg', charge_interval: '1500-6000', bed_nums: 450},
+                {id: '33', name: '北京光大汇晨朝来老年公寓33', img:'https://img2.okertrip.com/99alive-alpha/3.jpg', charge_interval: '1500-6000', bed_nums: 450},
+                {id: '34', name: '北京光大汇晨朝来老年公寓34', img:'https://img2.okertrip.com/99alive-alpha/3.jpg', charge_interval: '1500-6000', bed_nums: 450},
+                {id: '35', name: '北京光大汇晨朝来老年公寓35', img:'https://img2.okertrip.com/99alive-alpha/3.jpg', charge_interval: '1500-6000', bed_nums: 450},
+                {id: '36', name: '北京光大汇晨朝来老年公寓36', img:'https://img2.okertrip.com/99alive-alpha/3.jpg', charge_interval: '1500-6000', bed_nums: 450},
+                {id: '37', name: '北京光大汇晨朝来老年公寓37', img:'https://img2.okertrip.com/99alive-alpha/3.jpg', charge_interval: '1500-6000', bed_nums: 450},
+                {id: '38', name: '北京光大汇晨朝来老年公寓38', img:'https://img2.okertrip.com/99alive-alpha/3.jpg', charge_interval: '1500-6000', bed_nums: 450},
+                {id: '39', name: '北京光大汇晨朝来老年公寓39', img:'https://img2.okertrip.com/99alive-alpha/3.jpg', charge_interval: '1500-6000', bed_nums: 450}
+              ])
+            } catch (e) {
+              self.logger4js.error(e.message)
+              ctx.body = responser.error(e)
+            }
+            await next
+          }
+        }
       }
     ]
     return this
