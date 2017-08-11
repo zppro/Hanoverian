@@ -1,6 +1,6 @@
 {
   "name": "hanoverian",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "app framework with js tech integrated and self-envolution",
   "main": "index.js",
   "scripts": {
@@ -45,10 +45,12 @@
     "koa-compress": "^2.0.0",
     "koa-favicon": "^2.0.0",
     "koa-router": "^7.2.1",
+    "koa-session": "^5.5.0",
     "koa-xml-body": "^2.0.0",
     "log4js": "^2.0.1",
     "moment": "^2.18.1",
     "mongoose": "^4.11.2",
+    "trek-captcha": "^0.3.0",
     "vue": "^2.3.4",
     "vue-router": "^2.7.0",
     "vue-server-renderer": "^2.3.4",

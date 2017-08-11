@@ -10,6 +10,7 @@ import Koa from 'koa'
 import Router from 'koa-router'
 import KoaBody from 'koa-body'
 import XmlBodyParser from 'koa-xml-body'
+import session from 'koa-session'
 // import mongoose from 'mongoose'
 
 // import utils, { logger, mongoManager, mongoFactory } from 'cube-brick'
@@ -48,6 +49,9 @@ app.conf = {
   cors:{
     toPaths: ['/apis']
   },
+  session: {
+    key: 'hanoverian:sess'
+  },
   port: 9999,
   ...yargs.argv
 }
@@ -61,8 +65,16 @@ app.conf = {
   logger.d(`load models...`)
   await mongoManager.loadModels(app.conf.dir.db_schemas)
 
+  //session-cookie
+  app.keys = [app.conf.secure.authSecret]
+  logger.d(`configure middleware session...`)
+  const sessionOptions = Object.assign({}, app.conf.session)
+  router.use(session(sessionOptions, app))
+  app.sessionUtil = { decode: sessionOptions.decode, encode: sessionOptions.encode }
+  // console.log(sessionOptions, app.sessionUtil)
+
   //中间件
-  logger.d(`configure middlewares...`)
+  logger.d(`configure middleware CORS...`)
   const cors = koaCORS(corsWhitelist, {ignorePaths: app.conf.cors.ignorePaths, logger})
   app.conf.cors.toPaths.forEach(o => {
     router.use(o, cors)
@@ -131,6 +143,8 @@ app.conf = {
       })
     })
   }
+
+
 
   app.use(router.routes()).use(router.allowedMethods())
 
