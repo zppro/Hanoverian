@@ -68,9 +68,8 @@ app.conf = {
   //session-cookie
   app.keys = [app.conf.secure.authSecret]
   logger.d(`configure middleware session...`)
-  const sessionOptions = Object.assign({}, app.conf.session)
-  router.use(session(sessionOptions, app))
-  app.sessionUtil = { decode: sessionOptions.decode, encode: sessionOptions.encode }
+  app.sessionUtil = Object.assign({}, app.conf.session)
+  router.use(session(app.sessionUtil, app))
   // console.log(sessionOptions, app.sessionUtil)
 
   //中间件
@@ -80,8 +79,13 @@ app.conf = {
     router.use(o, cors)
   })
 
-  logger.d(`parse apis ...`)
+  logger.d(`parse apis && components...`)
   let apiFiles = await utils.readDirectoryStructure(app.conf.dir.apis, {
+    format: 'array',
+    exts: '.js',
+    excludeDirs: ['node_modules', '.git']
+  })
+  let componentFiles = await utils.readDirectoryStructure(app.conf.dir.components, {
     format: 'array',
     exts: '.js',
     excludeDirs: ['node_modules', '.git']
@@ -102,6 +106,16 @@ app.conf = {
       logCatagories[o.name] = {appenders: ['out', o.name], level: 'debug'}
       return result
     }, configAppenders)
+    componentFiles.reduce((result, o) => {
+      result[o.name] = {
+        type: 'file',
+        filename: path.join(app.conf.dir.log, o.relative_path.split('/').join('_') + '.log'),
+        maxLogSize: 2 * 1024 * 1024,
+        backups: 5
+      }
+      logCatagories[o.name] = {appenders: ['out', o.name], level: 'debug'}
+      return result
+    }, configAppenders)
 
     log4js.configure({
       appenders: configAppenders,
@@ -111,8 +125,8 @@ app.conf = {
       }
     })
 
-    let apis = await Promise.all(apiFiles.map(async o => {
-      const m = await import(`${app.conf.dir.apis}/${o.relative_path2}`).then(svc => {
+    let apis = await Promise.all(apiFiles.map(o => {
+      const m = import(`${app.conf.dir.apis}/${o.relative_path2}`).then(svc => {
         return {svc: svc.default, props: o}
       })
       return m
@@ -142,6 +156,15 @@ app.conf = {
         router[action.verb](`${routerUrl}_${action.method}`, action.url, bodyParser, action.handler(app))
       })
     })
+
+    logger.d(`init components...`)
+    componentFiles.forEach(async o => {
+      await import(`${app.conf.dir.components}/${o.relative_path2}`).then(svc => {
+        app[o.relative_name.substr(1)] = svc.default.init(app, {log_name: `${o.name}`})
+      })
+    })
+
+
   }
 
 
