@@ -99,9 +99,9 @@ const service = {
               const signature = ctx.request.body.signature || '99为老网'
               let msg = ctx.request.body.msg
               if(!msg){
-                msg = `${phone}用户,您的验证码:${ctx.session.mcode}[${signature}]`
+                msg = `${phone}用户,您的验证码:${ctx.session.mcode}【${signature}】`
               } else {
-                msg = msg.replace(/\{\{mcode\}\}/g, ctx.session.mcode) + `[${signature}]`
+                msg = msg.replace(/\{\{mcode\}\}/g, ctx.session.mcode) + `【${signature}】`
               }
               console.log('before send:', phone, msg)
               await app['notify_wodong'].sms(phone, msg)

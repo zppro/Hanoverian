@@ -176,6 +176,48 @@ const service = {
             await next
           }
         }
+      },
+      {
+        method: 'tpa$agencyInDetails',
+        verb: 'get',
+        url: `${self.routerUrl}/tpa/agencyInDetails/:id`,
+        handler: app => {
+          return async (ctx, next) => {
+            try {
+              const id = ctx.params.id
+              ctx.body = responser.ret( {
+                id,
+                imgs: [
+                  'https://img2.okertrip.com/99alive-alpha/1.png',
+                  'https://img2.okertrip.com/99alive-alpha/2.png',
+                  'https://img2.okertrip.com/99alive-alpha/3.jpg',
+                  'https://img2.okertrip.com/99alive-alpha/1.png',
+                  'https://img2.okertrip.com/99alive-alpha/2.png',
+                  'https://img2.okertrip.com/99alive-alpha/3.jpg'
+                ],
+                name: `杭州市社会福利中心-${id}`,
+                address: '杭州市拱墅区和睦路451号',
+                city: '杭州市',
+                nature: '公办',
+                type: '老年社会福利院', // /护老院/护养院/敬老院/托老所/老年人服务中心
+                publish_on: '1999年11月',
+                service_object: '自理/介助/介护',
+                fee_range: '2000以下', // /4000-4999/5000-7999/8000-9999/1万以上
+                bed_num_range: '200-499', // /200-499/500以上
+                star_rank: '五星级', // /四星级/五星级
+                link_man: '张XX',
+                link_phone: '13XXXXXXX123',
+                intro: '介绍...',
+                link_info: '联系方式...',
+                reputation: 'LAZY_LOAD'
+              })
+            } catch (e) {
+              self.logger4js.error(e.message)
+              ctx.body = responser.error(e)
+            }
+            await next
+          }
+        }
       }
     ]
     return this
