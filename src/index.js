@@ -10,6 +10,7 @@ import Koa from 'koa'
 import Router from 'koa-router'
 import KoaBody from 'koa-body'
 import XmlBodyParser from 'koa-xml-body'
+import session from 'koa-session'
 // import mongoose from 'mongoose'
 
 // import utils, { logger, mongoManager, mongoFactory } from 'cube-brick'
@@ -48,6 +49,9 @@ app.conf = {
   cors:{
     toPaths: ['/apis']
   },
+  session: {
+    key: 'hanoverian:sess'
+  },
   port: 9999,
   ...yargs.argv
 }
@@ -61,15 +65,27 @@ app.conf = {
   logger.d(`load models...`)
   await mongoManager.loadModels(app.conf.dir.db_schemas)
 
+  //session-cookie
+  app.keys = [app.conf.secure.authSecret]
+  logger.d(`configure middleware session...`)
+  app.sessionUtil = Object.assign({}, app.conf.session)
+  router.use(session(app.sessionUtil, app))
+  // console.log(sessionOptions, app.sessionUtil)
+
   //中间件
-  logger.d(`configure middlewares...`)
+  logger.d(`configure middleware CORS...`)
   const cors = koaCORS(corsWhitelist, {ignorePaths: app.conf.cors.ignorePaths, logger})
   app.conf.cors.toPaths.forEach(o => {
     router.use(o, cors)
   })
 
-  logger.d(`parse apis ...`)
+  logger.d(`parse apis && components...`)
   let apiFiles = await utils.readDirectoryStructure(app.conf.dir.apis, {
+    format: 'array',
+    exts: '.js',
+    excludeDirs: ['node_modules', '.git']
+  })
+  let componentFiles = await utils.readDirectoryStructure(app.conf.dir.components, {
     format: 'array',
     exts: '.js',
     excludeDirs: ['node_modules', '.git']
@@ -90,6 +106,16 @@ app.conf = {
       logCatagories[o.name] = {appenders: ['out', o.name], level: 'debug'}
       return result
     }, configAppenders)
+    componentFiles.reduce((result, o) => {
+      result[o.name] = {
+        type: 'file',
+        filename: path.join(app.conf.dir.log, o.relative_path.split('/').join('_') + '.log'),
+        maxLogSize: 2 * 1024 * 1024,
+        backups: 5
+      }
+      logCatagories[o.name] = {appenders: ['out', o.name], level: 'debug'}
+      return result
+    }, configAppenders)
 
     log4js.configure({
       appenders: configAppenders,
@@ -99,8 +125,8 @@ app.conf = {
       }
     })
 
-    let apis = await Promise.all(apiFiles.map(async o => {
-      const m = await import(`${app.conf.dir.apis}/${o.relative_path2}`).then(svc => {
+    let apis = await Promise.all(apiFiles.map(o => {
+      const m = import(`${app.conf.dir.apis}/${o.relative_path2}`).then(svc => {
         return {svc: svc.default, props: o}
       })
       return m
@@ -130,7 +156,18 @@ app.conf = {
         router[action.verb](`${routerUrl}_${action.method}`, action.url, bodyParser, action.handler(app))
       })
     })
+
+    logger.d(`init components...`)
+    componentFiles.forEach(async o => {
+      await import(`${app.conf.dir.components}/${o.relative_path2}`).then(svc => {
+        app[o.relative_name.substr(1)] = svc.default.init(app, {log_name: `${o.name}`})
+      })
+    })
+
+
   }
+
+
 
   app.use(router.routes()).use(router.allowedMethods())
 
