@@ -8,10 +8,10 @@ import utils, { responser } from 'cube-brick'
 import captcha from 'trek-captcha'
 
 const service = {
-  init: function (routerUrl, initOptions = {}) {
+  init: async function (routerUrl, {ctx, log_name}) {
     let self = this
     this.routerUrl = routerUrl.split('_').join('/')
-    this.logger4js = log4js.getLogger(initOptions.log_name)
+    this.logger4js = log4js.getLogger(log_name)
     this.logger4js.info(`${__filename} loaded!`)
 
     this.actions = [
@@ -43,7 +43,7 @@ const service = {
             try {
               const { token, buffer } = await captcha()
               ctx.session.vcode = token
-              // app['notify_wodong'].sms('18668001381', `验证码:${token}[99为老网]`)
+              // app.coms['notify_wodong'].sms('18668001381', `验证码:${token}[99为老网]`)
               ctx.body = buffer
             } catch (e) {
               self.logger4js.error(e.message)
@@ -104,7 +104,7 @@ const service = {
                 msg = msg.replace(/\{\{mcode\}\}/g, ctx.session.mcode) + `【${signature}】`
               }
               console.log('before send:', phone, msg)
-              await app['notify_wodong'].sms(phone, msg)
+              await app.coms['notify_wodong'].sms(phone, msg)
               ctx.session.last_mcode_on = new Date()
               ctx.body = responser.default()
             } catch (e) {

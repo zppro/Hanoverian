@@ -9,10 +9,10 @@ import utils, { responser } from 'cube-brick'
 import DISTRICTS from '../pre-defined/district.json'
 
 const service = {
-  init: function (routerUrl, initOptions = {}) {
+  init: async function (routerUrl, {ctx, log_name}) {
     let self = this
     this.routerUrl = routerUrl.split('_').join('/')
-    this.logger4js = log4js.getLogger(initOptions.log_name)
+    this.logger4js = log4js.getLogger(log_name)
     this.logger4js.info(`${__filename} loaded!`)
 
     this.actions = [

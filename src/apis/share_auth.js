@@ -11,17 +11,48 @@ import utils, { responser, mongoFactory } from 'cube-brick'
 import DIC from '../pre-defined/dictionary-constants.json'
 
 const service = {
-  init: function (routerUrl, initOptions = {}) {
+  init: async function (routerUrl, {ctx, log_name}) {
     let self = this
     this.routerUrl = routerUrl.split('_').join('/')
-    this.logger4js = log4js.getLogger(initOptions.log_name)
+    this.logger4js = log4js.getLogger(log_name)
     this.logger4js.info(`${__filename} loaded!`)
 
+    const appObjects = (await utils.readDirectoryStructure(ctx.conf.dir.apis + '/apps', {
+      format: 'array',
+      exts: '.js'
+    }))
+    this.appNames = appObjects.map(o => o.relative_path.substr(0, o.relative_path.lastIndexOf('.js')))
+    console.log('appNames:', appObjects, this.appNames)
     this.actions = [
       {
         method: 'signin',
         verb: 'post',
         url: `${self.routerUrl}/signin`,
+        handler: app => {
+          return async (ctx, next) => {
+            try {
+              console.log('share app signin:', ctx.request.body)
+              let {path, username, pass} = ctx.request.body
+              if(!self.appNames.includes(path)) {
+                ctx.body = responser.error({message: '非法的认证路径!'})
+                await next
+                return
+              }
+              ctx.session.signin_ts = +new Date()
+              // 需要对pass做hash
+              ctx.redirect(`/apis/${path}/signin/${username},${pass},${ctx.session.signin_ts}`)
+            } catch (e) {
+              self.logger4js.error(e.message)
+              ctx.body = responser.error(e)
+            }
+            await next
+          }
+        }
+      },
+      {
+        method: 'signin2',
+        verb: 'post',
+        url: `${self.routerUrl}/signin2`,
         handler: app => {
           return async (ctx, next) => {
             try {

@@ -133,14 +133,14 @@ app.conf = {
     }))
 
     logger.d(`register routers for apis...`)
-    apis.forEach(api => {
+    apis.forEach(async api => {
       let svc = api.svc
       let svc_module_name = api.props.name
       if (svc_module_name.includes('_')) {
         svc_module_name = svc_module_name.split('_').join('/')
       }
       let routerUrl = `/${api.props.relative_path}`.substr(0, api.props.relative_path.indexOf('.') + 1)
-      svc.init(routerUrl, {log_name: `${api.props.name}`})
+      await svc.init(routerUrl, {ctx: app, log_name: `${api.props.name}`})
       svc.actions.forEach(action => {
         let bodyParser
         if (app.conf.bodyParser.xml.findIndex(a => action.url.startsWith(a)) === -1) {
@@ -159,15 +159,12 @@ app.conf = {
 
     logger.d(`init components...`)
     componentFiles.forEach(async o => {
+      app['coms'] = {}
       await import(`${app.conf.dir.components}/${o.relative_path2}`).then(svc => {
-        app[o.relative_name.substr(1)] = svc.default.init(app, {log_name: `${o.name}`})
+        app.coms[o.relative_name] = svc.default.init(app, {log_name: `${o.name}`})
       })
     })
-
-
   }
-
-
 
   app.use(router.routes()).use(router.allowedMethods())
 

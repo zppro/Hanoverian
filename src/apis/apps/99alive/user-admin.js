@@ -1,27 +1,29 @@
 /**
- * Created by zppro on 17-7-17.
+ * Created by zppro on 17-7-31.
  */
 
 import log4js from 'log4js'
-import { responser, mongoFactory } from 'cube-brick'
+
+import utils, { responser } from 'cube-brick'
 
 const service = {
-  init: async function (routerUrl, {ctx, log_name}) {
+  init: function (routerUrl, {ctx, log_name}) {
     let self = this
     this.routerUrl = routerUrl.split('_').join('/')
     this.logger4js = log4js.getLogger(log_name)
     this.logger4js.info(`${__filename} loaded!`)
-
+    this.logger4js.info(`${routerUrl}`)
     this.actions = [
       {
-        method: 'fetch-district',
+        method: 'test',
         verb: 'get',
-        url: `${self.routerUrl}/district`,
+        url: `${self.routerUrl}/test`,
         handler: app => {
           return async (ctx, next) => {
             try {
-              let district = await import('../pre-defined/district.json')
-              ctx.body = responser.rows(district)
+
+
+              ctx.body = responser.ret({name: 'my-zppro', tested: true})
             } catch (e) {
               self.logger4js.error(e.message)
               ctx.body = responser.error(e)
@@ -31,22 +33,21 @@ const service = {
         }
       },
       {
-        method: 'fetch-model',
-        verb: 'post',
-        url: `${self.routerUrl}/model/:model`,
+        method: 'signin',
+        verb: 'get',
+        url: `${self.routerUrl}/signin/:username,:pass,:signin_ts`,
         handler: app => {
           return async (ctx, next) => {
             try {
-              let rows = mongoFactory().query(ctx.params.model, ctx.request.body)
-              let populates = ctx.request.body.populates
-              if (populates) {
-                if (Array.isArray(populates)) {
-                  populates.forEach(p => { rows = rows.populate(p) })
-                } else {
-                  rows = rows.populate(populates)
-                }
+              console.log('99alive/user-admin sigin:', Number(ctx.params.signin_ts), ctx.session)
+              if (Number(ctx.params.signin_ts) !== ctx.session.signin_ts) {
+                ctx.body = responser.error({message: '无效的参数[signin_ts]!'})
+                await next
+                return
               }
-              ctx.body = responser.rows(await rows)
+
+
+              ctx.body = responser.ret({name: ctx.params.username})
             } catch (e) {
               self.logger4js.error(e.message)
               ctx.body = responser.error(e)
