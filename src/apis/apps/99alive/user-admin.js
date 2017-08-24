@@ -3,7 +3,8 @@
  */
 
 import log4js from 'log4js'
-
+import moment from 'moment'
+import jwt from 'jsonwebtoken'
 import utils, { responser } from 'cube-brick'
 
 const service = {
@@ -39,15 +40,39 @@ const service = {
         handler: app => {
           return async (ctx, next) => {
             try {
-              console.log('99alive/user-admin sigin:', Number(ctx.params.signin_ts), ctx.session)
               if (Number(ctx.params.signin_ts) !== ctx.session.signin_ts) {
                 ctx.body = responser.error({message: '无效的参数[signin_ts]!'})
                 await next
                 return
               }
 
-
-              ctx.body = responser.ret({name: ctx.params.username})
+              let user = {id: ctx.params.username, name: ctx.params.username}
+              let signed = `${app.conf.secure.authSecret}:${moment().format('YYYY-MM-DD')}:${ctx.session.signin_ts}`
+              let token = jwt.sign(user, signed)
+              console.log('ua sign in:', user, token, ' signed:', signed)
+              ctx.cookies.set('token', token) //, {path:'/', httpOnly: false, overwrite: true}
+              ctx.cookies.set('signin_ts', ctx.session.signin_ts)
+              ctx.session.signin_ts = undefined
+              // console.log('cookie token:', ctx.cookies.get('token'), {path:'/', httpOnly: false, overwrite: true})
+              ctx.body = responser.ret({user, token})
+            } catch (e) {
+              self.logger4js.error(e.message)
+              ctx.body = responser.error(e)
+            }
+            await next
+          }
+        }
+      },
+      {
+        method: 'signout',
+        verb: 'get',
+        url: `${self.routerUrl}/signout`,
+        handler: app => {
+          return async (ctx, next) => {
+            try {
+              ctx.cookies.set('token', undefined)
+              ctx.cookies.set('signin_ts', undefined)
+              ctx.body = responser.default()
             } catch (e) {
               self.logger4js.error(e.message)
               ctx.body = responser.error(e)

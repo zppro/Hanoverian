@@ -22,8 +22,29 @@ const service = {
       exts: '.js'
     }))
     this.appNames = appObjects.map(o => o.relative_path.substr(0, o.relative_path.lastIndexOf('.js')))
-    console.log('appNames:', appObjects, this.appNames)
+    // console.log('appNames:', appObjects, this.appNames)
     this.actions = [
+      {
+        method: 'token',
+        verb: 'get',
+        url: `${self.routerUrl}/token/:token,:signin_ts`,
+        handler: app => {
+          return async (ctx, next) => {
+            try {
+              console.log('share app token:', ctx.params)
+              let {token, signin_ts} = ctx.params
+              let signed = `${app.conf.secure.authSecret}:${moment().format('YYYY-MM-DD')}:${signin_ts}`
+              console.log('share app token:', token, ' signed:', signed)
+              const user = jwt.verify(token, signed)
+              ctx.body = responser.ret(user)
+            } catch (e) {
+              self.logger4js.error(e.message)
+              ctx.body = responser.error(e)
+            }
+            await next
+          }
+        }
+      },
       {
         method: 'signin',
         verb: 'post',
@@ -38,9 +59,36 @@ const service = {
                 await next
                 return
               }
+              if (pass.length !== 32) {
+                pass = md5(pass).toString()
+              }
+
               ctx.session.signin_ts = +new Date()
               // 需要对pass做hash
               ctx.redirect(`/apis/${path}/signin/${username},${pass},${ctx.session.signin_ts}`)
+            } catch (e) {
+              self.logger4js.error(e.message)
+              ctx.body = responser.error(e)
+            }
+            await next
+          }
+        }
+      },
+      {
+        method: 'signout',
+        verb: 'post',
+        url: `${self.routerUrl}/signout`,
+        handler: app => {
+          return async (ctx, next) => {
+            try {
+              console.log('share app signout:', ctx.request.body)
+              let { path } = ctx.request.body
+              if(!self.appNames.includes(path)) {
+                ctx.body = responser.error({message: '非法的认证路径!'})
+                await next
+                return
+              }
+              ctx.redirect(`/apis/${path}/signout`)
             } catch (e) {
               self.logger4js.error(e.message)
               ctx.body = responser.error(e)

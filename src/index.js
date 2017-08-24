@@ -70,6 +70,9 @@ app.conf = {
   logger.d(`configure middleware session...`)
   app.sessionUtil = Object.assign({}, app.conf.session)
   router.use(session(app.sessionUtil, app))
+
+  let testS = app.sessionUtil.decode('eyJzaWduX3RzIjoxNTAzNDc4MjI2NjU2LCJ0b2tlbiI6ImV5SmhiR2NpT2lKSVV6STFOaUlzSW5SNWNDSTZJa3BYVkNKOS5leUpwWkNJNklqRXhJaXdpYm1GdFpTSTZJakV4SWl3aWFXRjBJam94TlRBek5UUTFNakl6ZlEuT0Ixb2R6RWJmQTJ0THZkck1SS284dnJ0RENpQXB5dW1uMGRyOVdoX2RvVSIsIl9leHBpcmUiOjE1MDM2MzgwMjU0OTksIl9tYXhBZ2UiOjg2NDAwMDAwfQ')
+  console.log('decode:', testS)
   // console.log(sessionOptions, app.sessionUtil)
 
   //中间件
@@ -167,6 +170,7 @@ app.conf = {
   }
 
   app.use(router.routes()).use(router.allowedMethods())
+
 
   app.listen(app.conf.port)
   // const svr = app.listen(app.conf.port);
