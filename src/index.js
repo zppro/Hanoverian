@@ -15,7 +15,7 @@ import session from 'koa-session'
 
 // import utils, { logger, mongoManager, mongoFactory } from 'cube-brick'
 import utils, { koaCORS, logger, mongoManager } from 'cube-brick'
-
+import Auth from './libs/auth'
 import corsWhitelist from './pre-defined/cors-whitelist.json'
 
 const app = new Koa()
@@ -42,6 +42,11 @@ app.conf = {
     apis: path.join(__dirname, 'apis'), // apis
     db_schemas: path.join(__dirname, 'db-schemas'),
     components: path.join(__dirname, 'components')
+  },
+  authWeb: {
+    secret: '',
+    toPaths:['/apis/apps/99alive'],
+    ignorePaths: ['/apis/apps/99alive/apiToken', '/apis/apps/99alive/user-admin/test', '/apis/apps/99alive/user-admin/signin', '/apis/apps/99alive/user-admin/signout']
   },
   bodyParser: {
     xml: [] // body需要xml解析
@@ -71,16 +76,27 @@ app.conf = {
   app.sessionUtil = Object.assign({}, app.conf.session)
   router.use(session(app.sessionUtil, app))
 
-  let testS = app.sessionUtil.decode('eyJzaWduX3RzIjoxNTAzNDc4MjI2NjU2LCJ0b2tlbiI6ImV5SmhiR2NpT2lKSVV6STFOaUlzSW5SNWNDSTZJa3BYVkNKOS5leUpwWkNJNklqRXhJaXdpYm1GdFpTSTZJakV4SWl3aWFXRjBJam94TlRBek5UUTFNakl6ZlEuT0Ixb2R6RWJmQTJ0THZkck1SS284dnJ0RENpQXB5dW1uMGRyOVdoX2RvVSIsIl9leHBpcmUiOjE1MDM2MzgwMjU0OTksIl9tYXhBZ2UiOjg2NDAwMDAwfQ')
-  console.log('decode:', testS)
+  // let testS = app.sessionUtil.decode('eyJzaWduX3RzIjoxNTAzNDc4MjI2NjU2LCJ0b2tlbiI6ImV5SmhiR2NpT2lKSVV6STFOaUlzSW5SNWNDSTZJa3BYVkNKOS5leUpwWkNJNklqRXhJaXdpYm1GdFpTSTZJakV4SWl3aWFXRjBJam94TlRBek5UUTFNakl6ZlEuT0Ixb2R6RWJmQTJ0THZkck1SS284dnJ0RENpQXB5dW1uMGRyOVdoX2RvVSIsIl9leHBpcmUiOjE1MDM2MzgwMjU0OTksIl9tYXhBZ2UiOjg2NDAwMDAwfQ')
+  // console.log('decode:', testS)
   // console.log(sessionOptions, app.sessionUtil)
 
   //中间件
+
   logger.d(`configure middleware CORS...`)
-  const cors = koaCORS(corsWhitelist, {ignorePaths: app.conf.cors.ignorePaths, logger})
+  const cors = koaCORS(corsWhitelist, { headers: ['X-Api-Token', 'x-custom-ts'], ignorePaths: app.conf.cors.ignorePaths, logger})
   app.conf.cors.toPaths.forEach(o => {
+    console.log('cors:', o)
     router.use(o, cors)
   })
+
+  logger.d(`configure middleware AUTH...`)
+  const authWeb = Auth(false, { secret: app.conf.secure.authSecret, ignorePaths: app.conf.authWeb.ignorePaths, logger})
+  app.conf.authWeb.toPaths.forEach(o => {
+    console.log('Auth:', o)
+    router.use(o, authWeb)
+  })
+
+
 
   logger.d(`parse apis && components...`)
   let apiFiles = await utils.readDirectoryStructure(app.conf.dir.apis, {

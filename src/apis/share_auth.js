@@ -25,9 +25,36 @@ const service = {
     // console.log('appNames:', appObjects, this.appNames)
     this.actions = [
       {
-        method: 'token',
+        method: 'apiToken',
         verb: 'get',
-        url: `${self.routerUrl}/token/:token,:signin_ts`,
+        url: `${self.routerUrl}/apiToken/:path`,
+        handler: app => {
+          return async (ctx, next) => {
+            try {
+              let {path} = ctx.params
+              path = path.split('_').join('/')
+              console.log('self.appNames:', self.appNames)
+              console.log('path:',  path)
+              if(!self.appNames.includes(path)) {
+                ctx.body = responser.error({message: '无效的路径!'})
+                await next
+                return
+              }
+              // 需要对pass做hash
+              ctx.session.api_token_ts = +new Date()
+              ctx.body = responser.ret(ctx.session.api_token_ts)
+            } catch (e) {
+              self.logger4js.error(e.message)
+              ctx.body = responser.error(e)
+            }
+            await next
+          }
+        }
+      },
+      {
+        method: 'signinByToken',
+        verb: 'get',
+        url: `${self.routerUrl}/signinByToken/:token,:signin_ts`,
         handler: app => {
           return async (ctx, next) => {
             try {
@@ -35,8 +62,8 @@ const service = {
               let {token, signin_ts} = ctx.params
               let signed = `${app.conf.secure.authSecret}:${moment().format('YYYY-MM-DD')}:${signin_ts}`
               console.log('share app token:', token, ' signed:', signed)
-              const user = jwt.verify(token, signed)
-              ctx.body = responser.ret(user)
+              const payload = jwt.verify(token, signed)
+              ctx.body = responser.ret(payload)
             } catch (e) {
               self.logger4js.error(e.message)
               ctx.body = responser.error(e)

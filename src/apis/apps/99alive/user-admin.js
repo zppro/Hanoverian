@@ -41,7 +41,7 @@ const service = {
           return async (ctx, next) => {
             try {
               if (Number(ctx.params.signin_ts) !== ctx.session.signin_ts) {
-                ctx.body = responser.error({message: '无效的参数[signin_ts]!'})
+                ctx.body = responser.error({message: '无效的参数3!'})
                 await next
                 return
               }

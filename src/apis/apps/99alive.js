@@ -3,7 +3,8 @@
  */
 
 import log4js from 'log4js'
-
+import moment from 'moment'
+import jwt from 'jsonwebtoken'
 import utils, { responser } from 'cube-brick'
 
 import keys from '../../pre-defined/keys.json'
@@ -16,6 +17,35 @@ const service = {
     this.logger4js.info(`${__filename} loaded!`)
 
     this.actions = [
+      {
+        method: 'apiTokenBySSR',
+        verb: 'get',
+        url: `${self.routerUrl}/apiTokenBySSR`,
+        handler: app => {
+          return async (ctx, next) => {
+            try {
+
+              if (Boolean(ctx.get('ssr')) === false) {
+                ctx.body = responser.error({message: '无效的参数1!'})
+                await next
+                return
+              }
+
+              const api_token_ts = +new Date()
+              let payload = '99alive-api-key'
+              let signed = `99alive:${moment().format('YYYY-MM-DD')}:${api_token_ts}`
+              let apiToken = jwt.sign(payload, signed)
+
+              // console.log('cookie token:', ctx.cookies.get('token'), {path:'/', httpOnly: false, overwrite: true})
+              ctx.body = responser.ret({apiToken, ts: api_token_ts})
+            } catch (e) {
+              self.logger4js.error(e.message)
+              ctx.body = responser.error(e)
+            }
+            await next
+          }
+        }
+      },
       {
         method: 'tpa$stats',
         verb: 'get',
