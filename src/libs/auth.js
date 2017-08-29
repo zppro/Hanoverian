@@ -54,12 +54,12 @@ export default (payloadKey, { secret, ignorePaths, logger }) => {
 
           // console.log(token)
           try {
-            const payload = jwt.verify(token, secret + ':' + timestamp)
+            const payload = jwt.verify(apiToken, secret + ':' + timestamp)
             console.log(`auth path ${ctx.path} only for verify api invoke from web`)
           } catch (e) {
             console.log(e)
             logger && logger.e(`auth path ${ctx.path} error`, e)
-            this.status = 401
+            ctx.status = 403
             return
           }
         }

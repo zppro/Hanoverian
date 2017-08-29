@@ -45,8 +45,8 @@ app.conf = {
   },
   authWeb: {
     secret: '',
-    toPaths:['/apis/apps/99alive'],
-    ignorePaths: ['/apis/apps/99alive/apiToken', '/apis/apps/99alive/user-admin/test', '/apis/apps/99alive/user-admin/signin', '/apis/apps/99alive/user-admin/signout']
+    toPaths:['/apis/apps/99alive/user-admin'],
+    ignorePaths: ['/apis/apps/99alive/user-admin/test', '/apis/apps/99alive/user-admin/signin', '/apis/apps/99alive/user-admin/signout']
   },
   bodyParser: {
     xml: [] // body需要xml解析
@@ -83,7 +83,7 @@ app.conf = {
   //中间件
 
   logger.d(`configure middleware CORS...`)
-  const cors = koaCORS(corsWhitelist, { headers: ['X-Api-Token', 'x-custom-ts'], ignorePaths: app.conf.cors.ignorePaths, logger})
+  const cors = koaCORS(router, {corsWhitelist, headers: ['X-Api-Token'], ignorePaths: app.conf.cors.ignorePaths, logger})
   app.conf.cors.toPaths.forEach(o => {
     console.log('cors:', o)
     router.use(o, cors)
@@ -184,6 +184,16 @@ app.conf = {
       })
     })
   }
+
+  // router.options('*', async (ctx, next) => {
+  //   // ctx.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+  //   ctx.set('Access-Control-Allow-Origin', '*')
+  //   ctx.set('Access-Control-Allow-Credentials', 'true');
+  //   ctx.set('Access-Control-Allow-Headers', 'Content-Type,Content-Length,Authorization,Accept,X-Requested-With,Origin,Access-Control-Allow-Origin,X-Custom-TS,x-custom-ts');
+  //   ctx.set('Access-Control-Allow-Methods', 'PUT,POST,GET,DELETE,OPTIONS');
+  //   // ctx.status = 204
+  //   await next()
+  // })
 
   app.use(router.routes()).use(router.allowedMethods())
 

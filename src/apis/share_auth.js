@@ -25,33 +25,6 @@ const service = {
     // console.log('appNames:', appObjects, this.appNames)
     this.actions = [
       {
-        method: 'apiToken',
-        verb: 'get',
-        url: `${self.routerUrl}/apiToken/:path`,
-        handler: app => {
-          return async (ctx, next) => {
-            try {
-              let {path} = ctx.params
-              path = path.split('_').join('/')
-              console.log('self.appNames:', self.appNames)
-              console.log('path:',  path)
-              if(!self.appNames.includes(path)) {
-                ctx.body = responser.error({message: '无效的路径!'})
-                await next
-                return
-              }
-              // 需要对pass做hash
-              ctx.session.api_token_ts = +new Date()
-              ctx.body = responser.ret(ctx.session.api_token_ts)
-            } catch (e) {
-              self.logger4js.error(e.message)
-              ctx.body = responser.error(e)
-            }
-            await next
-          }
-        }
-      },
-      {
         method: 'signinByToken',
         verb: 'get',
         url: `${self.routerUrl}/signinByToken/:token,:signin_ts`,
@@ -79,7 +52,7 @@ const service = {
         handler: app => {
           return async (ctx, next) => {
             try {
-              console.log('share app signin:', ctx.request.body)
+              // console.log('share app signin:', ctx.request.body)
               let {path, username, pass} = ctx.request.body
               if(!self.appNames.includes(path)) {
                 ctx.body = responser.error({message: '非法的认证路径!'})
@@ -92,7 +65,9 @@ const service = {
 
               ctx.session.signin_ts = +new Date()
               // 需要对pass做hash
+              console.log('---------->',`/apis/${path}/signin/${username},${pass},${ctx.session.signin_ts}`)
               ctx.redirect(`/apis/${path}/signin/${username},${pass},${ctx.session.signin_ts}`)
+              ctx.body = 'redirect'
             } catch (e) {
               self.logger4js.error(e.message)
               ctx.body = responser.error(e)
