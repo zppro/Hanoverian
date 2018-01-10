@@ -15,7 +15,7 @@ const userSchema = new mongoose.Schema({
   status: {type: Number, min: 0, max: 1, default: 1},
   code: {type: String, required: true, maxlength: 30, index: {unique: true}},
   name: {type: String, required: true, maxlength: 30},
-  phone: {type: String, maxlength: 20, unique: true, index: true},
+  phone: {type: String, maxlength: 20},
   type: {type: String, enum: Object.keys(PUB06).slice(1)},
   roles: [String],
   system_flag: {type: Boolean, default: false},
